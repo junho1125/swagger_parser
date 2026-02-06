@@ -2,6 +2,13 @@
 - Support for streaming & SSE
 - Fix preserve property names and required modifiers in properties blocks
 - Fix API path definitions are incorrectly converted to PascalCase
+- **BREAKING**: When `unknownEnumValue: false` and enum values don't contain `null`, enum `json` field and `toJson()` method are now non-nullable instead of nullable
+  - This improves type safety by removing unnecessary nullable types when all enum values are known and non-null
+  - Enum remains nullable if:
+    - `unknownEnumValue: true` (default)
+    - Enum contains an actual `null` value (not the string `"null"`)
+    - Enum type is already nullable (e.g., `String?` from schema)
+  - Example: `final String? json;` → `final String json;` and `String? toJson() => json;` → `String toJson() => json;`
 
 ## 1.41.0
 - Add `field_parsers` option for setting field parsers for JSON serializable

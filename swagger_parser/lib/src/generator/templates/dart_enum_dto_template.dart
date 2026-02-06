@@ -29,14 +29,18 @@ String dartEnumDtoTemplate(
     final values =
         '${enumClass.items.mapIndexed((i, e) => _enumValue(i, enumClass.type, e, jsonParam: jsonParam)).join(',')}${unknownEnumValue ? ',' : ';'}';
 
+    final dartType = enumClass.type.toDartType();
+    final hasNullValue = _hasNullValue(enumClass, enumClass.type);
+    final shouldBeNullable = _shouldBeNullable(unknownEnumValue, hasNullValue, dartType);
+
     final enumBodyParts = [
       values,
       if (unknownEnumValue) _unkownEnumValue(),
       if (jsonParam) _constructor(className),
       if (unknownEnumValue) _fromJson(className, enumClass),
-      if (jsonParam) _jsonField(enumClass),
-      if (enumsToJson) _toJson(enumClass, className),
-      if (jsonParam) _toString(),
+      if (jsonParam) _jsonField(enumClass, shouldBeNullable),
+      if (enumsToJson) _toJson(enumClass, className, shouldBeNullable),
+      if (jsonParam) _toString(shouldBeNullable),
       if (unknownEnumValue) _valuesDefined(className),
     ];
 
@@ -114,9 +118,35 @@ ${enumBodyParts.join()}
 
 String _constructor(String className) => '\n\n  const $className(this.json);\n';
 
-String _jsonField(UniversalEnumClass enumClass) {
+/// Checks if enum contains an actual null value (not the string "null")
+bool _hasNullValue(UniversalEnumClass enumClass, String type) {
+  // String "null" is generated as @JsonValue('null'), so exclude it
+  // Actual null is generated as @JsonValue(null) when type != 'string' and jsonKey == 'null'
+  return type != 'string' &&
+      enumClass.items.any((item) => item.jsonKey == 'null');
+}
+
+/// Determines if the json field and toJson() should be nullable
+bool _shouldBeNullable(bool hasUnknown, bool hasNullValue, String dartType) {
+  return hasUnknown || hasNullValue || dartType.endsWith('?');
+}
+
+/// Removes nullable marker from dart type
+String _nonNullableType(String dartType) {
+  if (dartType.endsWith('?')) {
+    return dartType.substring(0, dartType.length - 1);
+  }
+  return dartType == 'dynamic' ? 'dynamic' : dartType;
+}
+
+String _jsonField(UniversalEnumClass enumClass, bool shouldBeNullable) {
   final dartType = enumClass.type.toDartType();
-  return '\n  final $dartType${_nullableSign(dartType)} json;';
+  if (shouldBeNullable) {
+    return '\n  final $dartType${_nullableSign(dartType)} json;';
+  } else {
+    final nonNullableType = _nonNullableType(dartType);
+    return '\n  final $nonNullableType json;';
+  }
 }
 
 String _nullableSign(String dartType) {
@@ -189,13 +219,23 @@ ${index != 0 ? '\n' : ''}${descriptionComment(item.description, tab: '  ')}${ind
 ${indentation(2)}${item.name.toCamel}''';
 }
 
-String _toJson(UniversalEnumClass enumClass, String className) {
+String _toJson(UniversalEnumClass enumClass, String className, bool shouldBeNullable) {
   final dartType = enumClass.type.toDartType();
-  return '\n\n  $dartType${_nullableSign(dartType)} toJson() => json;';
+  if (shouldBeNullable) {
+    return '\n\n  $dartType${_nullableSign(dartType)} toJson() => json;';
+  } else {
+    final nonNullableType = _nonNullableType(dartType);
+    return '\n\n  $nonNullableType toJson() => json;';
+  }
 }
 
-String _toString() =>
-    '\n\n  @override\n  String toString() => json?.toString() ?? super.toString();';
+String _toString(bool shouldBeNullable) {
+  if (shouldBeNullable) {
+    return '\n\n  @override\n  String toString() => json?.toString() ?? super.toString();';
+  } else {
+    return '\n\n  @override\n  String toString() => json.toString();';
+  }
+}
 
 String _toStringDartMappable() =>
     '\n\n  @override\n  String toString() => toValue().toString();\n';

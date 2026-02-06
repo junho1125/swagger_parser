@@ -1662,12 +1662,12 @@ enum EnumName {
 
   const EnumName(this.json);
 
-  final int? json;
+  final int json;
 
-  int? toJson() => json;
+  int toJson() => json;
 
   @override
-  String toString() => json?.toString() ?? super.toString();
+  String toString() => json.toString();
 }
 ''';
 
@@ -1687,12 +1687,12 @@ enum EnumNameString {
 
   const EnumNameString(this.json);
 
-  final String? json;
+  final String json;
 
-  String? toJson() => json;
+  String toJson() => json;
 
   @override
-  String toString() => json?.toString() ?? super.toString();
+  String toString() => json.toString();
 }
 ''';
 

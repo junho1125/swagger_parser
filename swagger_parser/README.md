@@ -131,6 +131,12 @@ swagger_parser:
 
   # Optional (dart only). Set 'true' to maintain backwards compatibility
   # when adding new values on the backend.
+  # When set to 'false' and enum values don't contain null, the enum json field
+  # and toJson() method will be non-nullable (e.g., `final String json;` instead of `final String? json;`).
+  # Enum remains nullable if:
+  # - unknown_enum_value: true (default)
+  # - Enum contains an actual null value (not the string "null")
+  # - Enum type is already nullable (e.g., String? from schema)
   unknown_enum_value: true
 
   # Optional. Set 'false' to not put a comment at the beginning of the generated files.

@@ -61,6 +61,21 @@ void main() {
         schemaFileName: 'openapi.yaml',
       );
     });
+
+    test('enum_non_nullable', () async {
+      await e2eTest(
+        'enum_non_nullable',
+        (outputDirectory, schemaPath) => SWPConfig(
+          outputDirectory: outputDirectory,
+          schemaPath: schemaPath,
+          jsonSerializer: JsonSerializer.freezed,
+          putClientsInFolder: true,
+          enumsToJson: true,
+          unknownEnumValue: false,
+        ),
+        schemaFileName: 'openapi.yaml',
+      );
+    });
     test('multipart_request_properties', () async {
       await e2eTest(
         'multipart_request_properties',
